@@ -47,16 +47,32 @@ int main() {
     
   printf("Client connected!\n");
 
-  // Send a welcome message to client 
-  char *msg = "Hello from the Server..!\n";
-  ssize_t bytes_sent = write(client_fd, msg, strlen(msg));
-  // OR send(client_fd, msg, strlen(msg), 0);
+  // Buffer to hold incoming data 
+  char buffer[1024] = {0};  // Initialize all bytes to zero
+  
+  // Read data from client (blocks until data arrives)
+  ssize_t bytes_read = read(client_fd, buffer,  sizeof(buffer) - 1);
 
-  if (bytes_sent < 0) {
-    perror("Write failed..!");
+  if (bytes_read < 0) {
+    perror("Read Failed...!");
+  } else if (bytes_read == 0) {
+    printf("Client Disconnected.\n");
   } else {
-    printf("Sent %zd bytes to client.\n", bytes_sent);
+    // bytes_read > 0 : We received data
+    printf("Received %zd bytes from client.\n", bytes_read);
+    printf("Client sent: %s\n", buffer);
+
+    // Echo back to Client
+    char *response = "Message received..!\n";
+    ssize_t bytes_sent = write(client_fd, response, strlen(response));
+
+    if (bytes_sent < 0) {
+      perror("Write failed..!");
+    } else {
+      printf("Sent %zd bytes to client.\n", bytes_sent);
+    }
   }
+
 
   // Close the connections
   close(client_fd);

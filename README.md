@@ -4,7 +4,7 @@ A minimal implementation of a TCP server built from scratch using the standard *
 
 ## Objective
 
-To accept a single incoming TCP connection on **Port 8080**, send a welcome message to the client, and then exit gracefully.
+To accept a single incoming TCP connection on Port 8080, read a message from the client, reply with a confirmation, and then exit gracefully.
 
 ## Prerequisites
 
@@ -47,29 +47,29 @@ Open a **new** terminal window (keep the server running in the first one) and us
 nc localhost 8080
 ```
 
-**Option B: Using Curl**
-
-```bash
-curl -v telnet://localhost:8080
-```
+⚠️ Important: The server will now wait for you to type something!
+Type a message (e.g., "Hello World") and press Enter.
 
 ## Expected Behavior
 
 **On the Server Terminal:**
-Once you trigger the connection from the second terminal, the server will unblock, print the success message, and terminate.
+Once you send the message from the client, the server will read it, print it, send a reply, and terminate.
 
 ```text
 Server listening on port 8080...
 Waiting for a connection...
 Client connected!
-Sent 25 bytes to client.
+Received 12 bytes from client.
+Client sent: Hello World
+
+Sent 20 bytes to client.
 ```
 
 **On the Client Terminal:**
-You will receive the greeting message before the connection is closed.
+You will see your message echoed back with a confirmation.
 
 ```text
-Hello from the Server..!
+Message received..!
 ```
 
 ## Specific Concepts Demonstrated
@@ -81,7 +81,9 @@ This code implements the 5-step TCP Server Lifecycle:
 3. **`bind()`**: Assigns the address to the socket.
 4. **`listen()`**: Marks the socket as passive (waiting for incoming connections).
 5. **`accept()`**: Blocks execution until a client connects (the 3-way handshake).
-6. **`write()`**: Sends raw bytes (the welcome message) over the active socket file descriptor.
+6. **`close()`**: Cleans up resources.
+7. **`write()`**: Sends raw bytes (the welcome message) over the active socket file descriptor.
+8. **`read()`**: Blocks again until the client sends data. It stores the incoming bytes into a zero-initialized buffer.
 
 ## License
 
