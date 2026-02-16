@@ -4,7 +4,7 @@ A minimal implementation of a TCP server built from scratch using the standard *
 
 ## Objective
 
-To accept a single incoming TCP connection on **Port 8080**, acknowledge it, and then exit gracefully.
+To accept a single incoming TCP connection on **Port 8080**, send a welcome message to the client, and then exit gracefully.
 
 ## Prerequisites
 
@@ -20,7 +20,6 @@ Open your terminal and navigate to the directory containing `server.c`. Run the 
 
 ```bash
 gcc server.c -o server
-
 ```
 
 ### 2. Start the Server
@@ -29,7 +28,6 @@ Run the newly created executable. The server will start and wait for a connectio
 
 ```bash
 ./server
-
 ```
 
 *Expected Output:*
@@ -37,7 +35,6 @@ Run the newly created executable. The server will start and wait for a connectio
 ```text
 Server listening on port 8080...
 Waiting for a connection...
-
 ```
 
 ### 3. Test the Connection
@@ -48,14 +45,12 @@ Open a **new** terminal window (keep the server running in the first one) and us
 
 ```bash
 nc localhost 8080
-
 ```
 
 **Option B: Using Curl**
 
 ```bash
 curl -v telnet://localhost:8080
-
 ```
 
 ## Expected Behavior
@@ -67,11 +62,15 @@ Once you trigger the connection from the second terminal, the server will unbloc
 Server listening on port 8080...
 Waiting for a connection...
 Client connected!
-
+Sent 25 bytes to client.
 ```
 
 **On the Client Terminal:**
-You will see that the connection was opened and then immediately closed by the server.
+You will receive the greeting message before the connection is closed.
+
+```text
+Hello from the Server..!
+```
 
 ## Specific Concepts Demonstrated
 
@@ -82,6 +81,7 @@ This code implements the 5-step TCP Server Lifecycle:
 3. **`bind()`**: Assigns the address to the socket.
 4. **`listen()`**: Marks the socket as passive (waiting for incoming connections).
 5. **`accept()`**: Blocks execution until a client connects (the 3-way handshake).
+6. **`write()`**: Sends raw bytes (the welcome message) over the active socket file descriptor.
 
 ## License
 
