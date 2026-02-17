@@ -16,6 +16,14 @@ int main()
     exit(EXIT_FAILURE);
   }
 
+  // Set sokcet options to reuse address (helpful during development)
+  int opt = 1;
+  if (setsocketopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+    perror("setsocketopt failed");
+    close(server_fd);
+    exit(EXIT_FAILURE);
+  }
+
   // Prepare the address structure
   struct sockaddr_in address;
   address.sin_family = AF_INET;         // IPv4
@@ -64,10 +72,14 @@ int main()
     if (bytes_read < 0)
     {
       perror("Read Failed...!");
+      close(client_fd);
+      continue;
     }
     else if (bytes_read == 0)
     {
       printf("Client Disconnected.\n");
+      close(client_fd);
+      continue;
     }
     else
     {
@@ -122,6 +134,8 @@ int main()
         if (bytes_sent < 0)
         {
           perror("Response sent failed..!");
+          close(client_fd);
+          continue;
         }
         else
         {
