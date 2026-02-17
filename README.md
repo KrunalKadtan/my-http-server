@@ -4,11 +4,11 @@ A minimal implementation of a TCP server built from scratch using the standard *
 
 ## Objective
 
-To create a server that runs indefinitely, continuously accepting incoming connections on Port 8080. For each connection, it will:
-1. Read a message from the client.
-2. Print the message to the server console.
-3. Reply with a confirmation.
-4. Close the client connection and immediately wait for the next user.
+To create a server that runs indefinitely on Port 8080, accepting connections from web browsers (or CLI tools). For each connection, it will:
+1. Receive a raw HTTP request.
+2. Parse (log) the incoming request headers.
+3. Construct a valid HTTP/1.1 response (Status + Headers + Body).
+4. Serve the response to the client and close the connection.
 
 ## Prerequisites
 
@@ -45,20 +45,17 @@ Waiting for next client...
 
 ### 3. Test the Connection (Multiple Times)
 
-You can now connect, send a message, disconnect, and connect again!
+**Option A: Web Browser (Recommended)**
 
-**Terminal Window 2 (Client A):**
+Open your browser and navigate to:
+http://localhost:8080
 
-```bash
-nc localhost 8080
-# Type "Hello Server" and hit Enter
-```
+You should see "Hello, World!" displayed on the page.
 
-**Terminal Window 3 (Client B):**
+**Option B: Command Line**
 
 ```bash
-nc localhost 8080
-# Type "Greetings from Client B" and hit Enter
+curl -v http://localhost:8080
 ```
 
 To stop the server, go to the server terminal and press Ctrl+C.
@@ -69,21 +66,22 @@ To stop the server, go to the server terminal and press Ctrl+C.
 You will see a running log of all clients that have connected.
 
 ```text
-Server listening on port 8080...
+Server listening on http://localhost:8080
 Press Ctrl+C to stop
 
 Waiting for next client...
 Client connected!
-Received 13 bytes from client.
-Client sent: Hello Server
-Sent 20 bytes to client.
-Client Disconnected
 
-Waiting for next client...
-Client connected!
-Received 24 bytes from client.
-Client sent: Greetings from Client B
-Sent 20 bytes to client.
+Received 77 bytes from client.
+
+Client sent:
+GET / HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/8.5.0
+Accept: */*
+
+
+HTTP response sent.
 Client Disconnected
 
 Waiting for next client...
@@ -93,26 +91,30 @@ Waiting for next client...
 Each client receives the confirmation message before being disconnected.
 
 ```text
-Message received..!
+Hello, World!
 ```
 
-## Specific Concepts Demonstrated
+## Technical Architecture
 
-1. **`socket()`**: Creates the endpoint for communication.
-2. **`struct sockaddr_in`**: Manually defines the IPv4 address and Port (using `htons` for byte-order conversion).
-3. **`bind()`**: Assigns the address to the socket.
-4. **`listen()`**: Marks the socket as passive (waiting for incoming connections).
-5. **`accept()`**: Blocks execution until a client connects (the 3-way handshake).
-6. **`close()`**: Cleans up resources.
-7. **`write()`**: Sends raw bytes (the welcome message) over the active socket file descriptor.
-8. **`read()`**: Blocks again until the client sends data. It stores the incoming bytes into a zero-initialized buffer.
-9. **`while(1)` Loop**: The core structure that keeps the server alive indefinitely.
-10. **Sequential Processing**: Handling one client at a time. If Client A is connected, Client B waits in the OS queue until Client A finishes.
-11. Resource Management:
-    1.  `server_fd`: Kept open forever (the listening socket).
-    2.  `client_fd`: Created and closed inside the loop for each individual session.
-12. **Resilient Error Handling**: Using continue to skip failed connections without crashing the entire server.
-13. **Buffer Clearing**: Re-initializing the data buffer for every new connection to prevent data leaks between clients.
+Instead of relying on external frameworks, this project manually implements the core components of a web server.
+
+**1. The Execution Model (Iterative)**
+  - **Synchronous Processing**: The server handles one client at a time using a main `while(1)` loop.
+  - **Blocking I/O**: Utilizes blocking system calls (`accept`, `read`) to pause execution until network events occur, ensuring CPU efficiency during idle times.
+  - **Resiliency**: Implements error handling with `continue` statements to ensure a single failed connection does not crash the main server process.
+**2. Network Lifecycle (The Syscalls)**
+The server manually manages the full TCP state machine:
+  - **Setup**: `socket()` (Endpoint creation) $\rightarrow$ `bind()` (Address assignment) $\rightarrow$ `listen()` (Passive mode).
+  - **Connection**: `accept()` performs the 3-way handshake and yields a dedicated file descriptor (`client_fd`) for the session.
+  - **Teardown**: `close()` is called immediately after the response is sent to signal the end of the HTTP transaction.
+**3. Protocol Implementation (HTTP/1.1)**
+The server moves beyond raw binary streams to implement application-layer logic:
+  - **Response Construction**: Manually formats HTTP headers (Status Code, Content-Type, Content-Length) using `sprintf`.
+  - **Protocol Compliance**: Strictly adheres to HTTP standards, including the required \r\n line endings and double-CRLF separator between headers and body.
+
+**4. Memory & Resource Management**
+  - **Buffer Safety**: Uses explicit zero-initialization (`{0}`) for data buffers to prevent memory leaks or garbage data in strings.
+  - **Descriptor Management**: distinct separation between the **Listening Socket** (Server Lifecycle) and **Connection Socket** (Request Lifecycle).
 
 ## License
 

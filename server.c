@@ -38,7 +38,7 @@ int main()
     exit(EXIT_FAILURE);
   }
 
-  printf("Server listening on port 8080...\n");
+  printf("Server listening on http://localhost:8080\n");
   printf("Press Ctrl+C to stop\n\n");
 
   while (1)
@@ -56,7 +56,7 @@ int main()
     printf("Client connected!\n");
 
     // Buffer to hold incoming data
-    char buffer[1024] = {0}; // Initialize all bytes to zero
+    char buffer[4096] = {0}; // Initialize all bytes to zero
 
     // Read data from client (blocks until data arrives)
     ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
@@ -72,20 +72,34 @@ int main()
     else
     {
       // bytes_read > 0 : We received data
-      printf("Received %zd bytes from client.\n", bytes_read);
-      printf("Client sent: %s\n", buffer);
+      printf("\nReceived %zd bytes from client.\n", bytes_read);
+      printf("\nClient sent:\n%s\n", buffer);
 
-      // Echo back to Client
-      char *response = "Message received..!\n";
-      ssize_t bytes_sent = write(client_fd, response, strlen(response));
+      // Build HTTP response
+      char http_response[2048];
+      char *body = "Hello, World!\n";
+      int body_length = strlen(body);
+
+      // Format the complete HTTP response
+      sprintf(http_response,
+              "HTTP/1.1 200 OK\r\n"
+              "Content-Type: text/plain\r\n"
+              "Content-Length: %d\r\n"
+              "\r\n"
+              "%s",
+              body_length,
+              body);
+
+      // Send the HTTP response
+      ssize_t bytes_sent = write(client_fd, http_response, strlen(http_response));
 
       if (bytes_sent < 0)
       {
-        perror("Write failed..!");
+        perror("Response sent failed..!");
       }
       else
       {
-        printf("Sent %zd bytes to client.\n", bytes_sent);
+        printf("HTTP response sent.\n");
       }
     }
 
