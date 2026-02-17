@@ -75,13 +75,39 @@ int main()
       printf("\nReceived %zd bytes from client.\n", bytes_read);
       printf("\nClient sent:\n%s\n", buffer);
 
-      // Build HTTP response
-      char http_response[2048];
-      char *body = "Hello, World!\n";
-      int body_length = strlen(body);
+      // Parse the request line 
+      char method[16] = {0};
+      char path[256] = {0};
+      char version[16] = {0};
 
-      // Format the complete HTTP response
-      sprintf(http_response,
+      // Extract method, path & version from the first line
+      int parsed = sscanf(buffer, "%s %s %s", method, path, version);
+
+      
+      if (parsed == 3) {
+        printf("Method: %s\n", method);
+        printf("Path: %s\n", path);
+        printf("Version: %s\n", version);
+        
+        // Route based on path 
+        char *body;
+        
+        
+        if (strcmp(path, "/") == 0) {
+          body = "Home Page";
+        } else if (strcmp(path, "/about") == 0) {
+          body = "About Page";
+        } else {
+          body = "404 Not Found";
+        }
+
+        // Build HTTP response
+        char http_response[2048];
+      
+        int body_length = strlen(body);
+
+        // Format the complete HTTP response
+        sprintf(http_response,
               "HTTP/1.1 200 OK\r\n"
               "Content-Type: text/plain\r\n"
               "Content-Length: %d\r\n"
@@ -90,16 +116,30 @@ int main()
               body_length,
               body);
 
-      // Send the HTTP response
-      ssize_t bytes_sent = write(client_fd, http_response, strlen(http_response));
+        // Send the HTTP response
+        ssize_t bytes_sent = write(client_fd, http_response, strlen(http_response));
 
-      if (bytes_sent < 0)
-      {
-        perror("Response sent failed..!");
-      }
-      else
-      {
-        printf("HTTP response sent.\n");
+        if (bytes_sent < 0)
+        {
+          perror("Response sent failed..!");
+        }
+        else
+        {
+          printf("HTTP response sent.\n");
+        }
+
+      } else {
+        printf("Failed to parse request line\n");
+
+        // Bad request
+        char *error_response = 
+          "HTTP/1.1 400 Bad Request\r\n"
+          "Content-Type: text/plain\r\n"
+          "Content-Length: 11\r\n"
+          "\r\n"
+          "Bad Request";
+
+        write(client_fd, error_response, strlen(error_response));
       }
     }
 

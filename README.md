@@ -1,20 +1,21 @@
 # Simple TCP Server in Pure C
 
-A minimal implementation of a TCP server built from scratch using the standard **[Berkeley Sockets API](https://en.wikipedia.org/wiki/Berkeley_sockets)**. This project demonstrates how to build a server that can handle multiple clients sequentially (one after another) without shutting down.
+A minimal implementation of a TCP server built from scratch using the standard **[Berkeley Sockets API](https://en.wikipedia.org/wiki/Berkeley_sockets)**. This project demonstrates how to build a server that communicates using the HTTP/1.1 Protocol, parses incoming requests, and routes them to different logical "pages".
 
 ## Objective
 
-To create a server that runs indefinitely on Port 8080, accepting connections from web browsers (or CLI tools). For each connection, it will:
-1. Receive a raw HTTP request.
-2. Parse (log) the incoming request headers.
-3. Construct a valid HTTP/1.1 response (Status + Headers + Body).
-4. Serve the response to the client and close the connection.
+To create a server that runs indefinitely on **Port 8080**, accepting connections from web browsers. For each connection, it will:
+1. **Receive** a raw HTTP request.
+2. **Parse** the Request Line to extract the **Method** (GET), **Path** (/about), and **Version** (HTTP/1.1).
+3. **Route** the request to the correct content based on the URL path.
+4. **Construct** a valid HTTP/1.1 response (Status + Headers + Body).
+5. **Serve** the response and close the connection.
 
 ## Prerequisites
 
 * **OS:** Linux or macOS (POSIX-compliant system)
 * **Compiler:** GCC or Clang
-* **Tools:** Terminal access
+* **Tools:** Terminal access, Web Browser (Chrome/Firefox/Safari)
 
 ## How to Run
 
@@ -37,25 +38,26 @@ Run the newly created executable. The server will start and wait for a connectio
 *Expected Output:*
 
 ```text
-Server listening on port 8080...
+Server listening on http://localhost:8080
 Press Ctrl+C to stop
 
 Waiting for next client...
 ```
 
-### 3. Test the Connection (Multiple Times)
+### 3. Test the Routing
 
-**Option A: Web Browser (Recommended)**
+You can now test different URLs to see the routing logic in action.
 
-Open your browser and navigate to:
-http://localhost:8080
+**Option A: Web Browser**
 
-You should see "Hello, World!" displayed on the page.
+- **Home Page**: http://localhost:8080/ $\rightarrow$ Displays "Home Page"
+- **About Page**: http://localhost:8080/about $\rightarrow$ Displays "About Page"
+- **Error Page**: http://localhost:8080/pizza $\rightarrow$ Displays "404 Not Found"
 
-**Option B: Command Line**
+**Option B: Command Line (curl)**
 
 ```bash
-curl -v http://localhost:8080
+curl -v http://localhost:8080/about
 ```
 
 To stop the server, go to the server terminal and press Ctrl+C.
@@ -66,32 +68,29 @@ To stop the server, go to the server terminal and press Ctrl+C.
 You will see a running log of all clients that have connected.
 
 ```text
-Server listening on http://localhost:8080
-Press Ctrl+C to stop
-
 Waiting for next client...
 Client connected!
 
-Received 77 bytes from client.
+Received 78 bytes from client.
 
 Client sent:
-GET / HTTP/1.1
+GET /about HTTP/1.1
 Host: localhost:8080
-User-Agent: curl/8.5.0
+User-Agent: curl/8.16.0
 Accept: */*
 
 
+Method: GET
+Path: /about
+Version: HTTP/1.1
 HTTP response sent.
 Client Disconnected
-
-Waiting for next client...
 ```
 
 **On the Client Terminal:**
-Each client receives the confirmation message before being disconnected.
 
 ```text
-Hello, World!
+About Page
 ```
 
 ## Technical Architecture
@@ -102,11 +101,11 @@ Instead of relying on external frameworks, this project manually implements the 
   - **Synchronous Processing**: The server handles one client at a time using a main `while(1)` loop.
   - **Blocking I/O**: Utilizes blocking system calls (`accept`, `read`) to pause execution until network events occur, ensuring CPU efficiency during idle times.
   - **Resiliency**: Implements error handling with `continue` statements to ensure a single failed connection does not crash the main server process.
-**2. Network Lifecycle (The Syscalls)**
-The server manually manages the full TCP state machine:
-  - **Setup**: `socket()` (Endpoint creation) $\rightarrow$ `bind()` (Address assignment) $\rightarrow$ `listen()` (Passive mode).
-  - **Connection**: `accept()` performs the 3-way handshake and yields a dedicated file descriptor (`client_fd`) for the session.
-  - **Teardown**: `close()` is called immediately after the response is sent to signal the end of the HTTP transaction.
+**2. Request Parsing & Routing**
+The server acts as an interpreter for the HTTP text protocol:
+  - **Parsing**: Uses `sscanf` to break the first line of the request (e.g., `GET /about HTTP/1.1`) into three distinct strings: Method, Path, and Version.
+  - **Routing Logic**: Uses `strcmp` (String Compare) to match the extracted Path against known routes (`/`, `/about`).
+  - **Fallback Handling**: Automatically defaults to a "404 Not Found" response if the path does not match any known route.
 **3. Protocol Implementation (HTTP/1.1)**
 The server moves beyond raw binary streams to implement application-layer logic:
   - **Response Construction**: Manually formats HTTP headers (Status Code, Content-Type, Content-Length) using `sprintf`.
