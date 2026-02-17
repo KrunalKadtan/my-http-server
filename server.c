@@ -5,9 +5,33 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <errno.h>
+#include <signal.h>
+
+// Global variable to hold server socket (needed for signal handler)
+int server_fd_global = -1;
+
+// Signal handler function
+void handle_sigint(int sig) {
+  printf("\n\nCaught signal %d (Ctrl+C Pressed)\n", sig);
+  printf("Shutting down server gracefully...\n");
+
+  // Close the server socket
+  if (server_fd_global >= 0) {
+    close(server_fd_global);
+    printf("Server socket closed\n");
+  }
+
+  printf("GoodBye!\n");
+  exit(0);
+}
 
 int main()
 {
+  // Register signal handler BEFORE creating socket
+  signal(SIGINT, handle_sigint);
+  printf("Signal handler registered for SIGINT\n");
+
   // Create a socket
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (server_fd < 0)
@@ -16,9 +40,12 @@ int main()
     exit(EXIT_FAILURE);
   }
 
+  // Store in global for signal handler
+  server_fd_global = server_fd;
+
   // Set sokcet options to reuse address (helpful during development)
   int opt = 1;
-  if (setsocketopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
     perror("setsocketopt failed");
     close(server_fd);
     exit(EXIT_FAILURE);
@@ -57,6 +84,11 @@ int main()
     int client_fd = accept(server_fd, NULL, NULL);
     if (client_fd < 0)
     {
+      // Check if interrupted by signal
+      if (errno == EINTR) {
+        printf("Accept interrupted by signal\n");
+        break;
+      }
       perror("accept failed");
       continue; // Skip this iteration, try again
     }
