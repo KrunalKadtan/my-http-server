@@ -1,0 +1,37 @@
+
+===============================
+Server started at: Wed Feb 18 09:17:36 2026
+==============================
+
+[2026-02-18 09:17:36] [INFO] ==============================
+[2026-02-18 09:17:36] [INFO] Stating HTTP server...
+[2026-02-18 09:17:36] [INFO] ==============================
+[2026-02-18 09:17:36] [DEBUG] Signal handler registered
+[2026-02-18 09:17:36] [INFO] Server listening on http://localhost:8080
+[2026-02-18 09:17:36] [INFO] Logs are being written to server.log
+[2026-02-18 09:17:36] [INFO] Press Ctrl+C to stop
+
+[2026-02-18 09:18:09] [DEBUG] Client connected (fd: 5, request #1)
+[2026-02-18 09:18:09] [INFO] GET / HTTP/1.1
+[2026-02-18 09:18:09] [DEBUG] Sent 96 bytes to client
+[2026-02-18 09:18:09] [DEBUG] Client connection closed
+[2026-02-18 09:18:20] [DEBUG] Client connected (fd: 5, request #2)
+[2026-02-18 09:18:20] [INFO] GET / HTTP/1.1
+[2026-02-18 09:18:20] [DEBUG] Sent 96 bytes to client
+[2026-02-18 09:18:20] [DEBUG] Client connection closed
+[2026-02-18 09:18:29] [DEBUG] Client connected (fd: 5, request #3)
+[2026-02-18 09:18:29] [INFO] GET /test HTTP/1.1
+[2026-02-18 09:18:29] [DEBUG] Sent 96 bytes to client
+[2026-02-18 09:18:29] [DEBUG] Client connection closed
+[2026-02-18 09:18:34] [DEBUG] Client connected (fd: 5, request #4)
+[2026-02-18 09:18:34] [INFO] GET /api HTTP/1.1
+[2026-02-18 09:18:34] [DEBUG] Sent 96 bytes to client
+[2026-02-18 09:18:34] [DEBUG] Client connection closed
+[2026-02-18 09:18:48] [INFO] Received 2 SIGINT (Ctrl+C)
+[2026-02-18 09:18:48] [INFO] Shutting down gracefully...
+[2026-02-18 09:18:48] [INFO] Server socket closed
+
+==============================
+Server stopped
+==============================
+
